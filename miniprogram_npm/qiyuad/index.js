@@ -4,17 +4,22 @@ var __DEFINE__ = function(modId, func, req) { var m = { exports: {} }; __MODS__[
 var __REQUIRE__ = function(modId, source) { if(!__MODS__[modId]) return require(source); if(!__MODS__[modId].status) { var m = { exports: {} }; __MODS__[modId].status = 1; __MODS__[modId].func(__MODS__[modId].req, m, m.exports); if(typeof m.exports === "object") { Object.keys(m.exports).forEach(function(k) { __MODS__[modId].m.exports[k] = m.exports[k]; }); if(m.exports.__esModule) Object.defineProperty(__MODS__[modId].m.exports, "__esModule", { value: true }); } else { __MODS__[modId].m.exports = m.exports; } } return __MODS__[modId].m.exports; };
 var __REQUIRE_WILDCARD__ = function(obj) { if(obj && obj.__esModule) { return obj; } else { var newObj = {}; if(obj != null) { for(var k in obj) { if (Object.prototype.hasOwnProperty.call(obj, k)) newObj[k] = obj[k]; } } newObj.default = obj; return newObj; } };
 var __REQUIRE_DEFAULT__ = function(obj) { return obj && obj.__esModule ? obj.default : obj; };
-__DEFINE__(1542001766292, function(require, module, exports) {
+__DEFINE__(1542001766290, function(require, module, exports) {
 let version = "1.0.5";
 var CryptoJS = require("./crypto-js");
 let addata = "";
 let systemInfo = "";
 let btnArea = "";
+let btnAreaClose = "";
 let closeBtn = "";
-let i = 1;
+let adMain = "";
+let adIcon = "";
+let isMuted = false;
+
 //class
 if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: true });exports.default = class Advertise {
   constructor({
+    adType,
     ctx,
     // canvas,
     appid,
@@ -27,8 +32,27 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
     this.ctx = ctx;
     this.unClick = true;
     this.appid = appid;
+    this.loaded = false;
+    this.canvas = ctx.canvas;
+    this.adType = adType;
+    if (this.adType == "fullScreen") {
+      let self = this;
+      self.countSeconds = 6;
+      setInterval(function () {
+        self.countSeconds = self.countSeconds - 1;
+      }, 1000);
+      setTimeout(function () {
+        self.adType = "";
+      }, 6000);
+    }
+    if (this.adType == "bottomBanner") {
+      this.clickad = this.click.bind(this);
+      this.canvas.addEventListener("touchstart", this.clickad);
+
+    }
 
     this.advertise({
+      adType: adType,
       canvas: canvas,
       ctx: ctx,
       appid: appid,
@@ -122,24 +146,7 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
     });
     return ciphertext.ciphertext.toString(CryptoJS.enc.Hex);
   }
-  // 交互类型: 0-预览图 1-跳转⼩小程序 2-跳转⻚页⾯面   目前仅支持跳转小程序
-  clickType(e) {
-    var type = e.currentTarget.dataset.type;
-    if (parseInt(type) === 0) {
-      var url = e.currentTarget.dataset.url;
-      var ext = e.currentTarget.dataset.ext;
-      var sign = e.currentTarget.dataset.sign;
-      this.previewImgFun(url, ext, sign);
-    }
-  }
-  previewImgFunfunction(url, ext, sign) {
-    wx.previewImage({
-      current: url, // 当前显示图片的http链接
-      urls: [url] // 需要预览的图片http链接列表
-    });
-    // 平台点击接口请求参数
-    this.ck(ext, sign);
-  }
+
   // 平台曝光
   im(params) {
     var self = this;
@@ -183,7 +190,7 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
       },
       success: function (res) {
         if (res.statusCode === 200) {
-          console.log(res);
+          // console.log(res);
         }
       },
       fail: function (err) {
@@ -191,45 +198,60 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
       }
     });
   }
-
-  // 关闭弹窗广告
-  clickClose(e) {
-    this.setData({
-      isHide: true
-    });
-  }
-  // 统计浮层
-  hideCover(e) {
-    this.setData({
-      "resultData.stat": null
-    });
-  }
-
   //点击
 
   click(e) {
     var self = this;
 
-    // e.preventDefault();
+    e.preventDefault();
 
     let x = e.touches[0].clientX;
     let y = e.touches[0].clientY;
-    console.log(x, y)
-    if (y >= btnArea.top) {
-      self.unClick = false;
-      i++;
-      console.log(i);
+    console.log(x, y);
+    if (x > btnArea.left && y >= btnArea.top) {
+      console.log(addata, "--------------------=============");
       wx.navigateToMiniProgram({
-        appId: "wxc96364a5c458629e",
-        path: "pages/nav/nav?slotid=slotid&adid=2",
+        appId: this.addata.link,
+        // path: "pages/nav/nav?slotid=slotid&adid=2",
         complete: function (res) {}
       });
       self.ck(self.addata);
       return;
     }
+    if (
+      x < btnAreaClose.right &&
+      x > btnAreaClose.left &&
+      y < btnAreaClose.bottom &&
+      y >= btnAreaClose.top
+    ) {
+      isMuted = true;
+      console.log("clole  nute");
+      self.advideo.pause();
+      wx.showModal({
+        title: "提示",
+        content: "观看完整视频可获得奖励",
+        confirmText: '关闭广告',
+        cancelText: '继续观看',
+
+
+        success(res) {
+          if (res.confirm) {
+            console.log("用户点击确定");
+            self.advideo.destroy();
+            window.cancelAnimationFrame(self.bannerAniId);
+            self.videoPlaying = false;
+          } else if (res.cancel) {
+            console.log("用户点击取消");
+            self.advideo.play();
+          }
+        }
+      });
+    }
   }
 
   advertise({
+    adType,
+    canvas,
     ctx,
     appid,
     slotid,
@@ -238,12 +260,8 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
     userinfo,
     hasUUid
   }) {
-    wx.onTouchStart((e) => {
-      self.click(e)
-    })
     var self = this;
     var appid = appid;
-    console.log(ctx, "ctx");
     // 判断openid是否必填,不必填随机32位字符串存入缓存作为uuid的值
     if (hasUUid === false) {
       this.setTempUuid();
@@ -251,7 +269,6 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
     // 获取网络类型,获取设备类型
     Promise.all([this.getNetworkType(), this.getCellphoneSystemInfo()])
       .then(results => {
-        console.log(results, 'results---------------')
         this.results = results;
         this.getContent({
           canvas: canvas,
@@ -263,16 +280,15 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
           wxopt,
           hasUUid
         }).then(res => {
-          console.log(res, "ren-------------");
+          console.log(adType, "ren-------------");
         });
       })
       .then(function (res) {
         console.log("test==========");
       });
-
-    console.log("This is a message from the demo package");
   }
   getContent({
+    adType,
     ctx,
     results,
     appid,
@@ -290,29 +306,22 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
         slotid: slotid,
         uuid: uuid,
         wxopt: wxopt,
-        userinfo: userinfo,
-        //   // 请求ID
-        reqid: new Date().getTime() + self.randomString(17),
-        //   // 设备型号
-        model: results[1].model,
-        //   // 操作系统
+        userinfo: userinfo, //   // 请求ID
+        reqid: new Date().getTime() + self.randomString(17), //   // 设备型号
+        model: results[1].model, //   // 操作系统
         os: results[1].system.indexOf("iOS") != -1 ?
           1 : results[1].system.indexOf("Android") != -1 ?
-          2 : 0,
-        //   // 操作系统版本
-        osv: results[1].system,
-        //   // 微信版本
-        wxv: results[1].version,
-        //   // 小程序接口版本
-        wxpv: results[1].SDKVersion,
-        //   // 网络类型
+          2 : 0, //   // 操作系统版本
+        osv: results[1].system, //   // 微信版本
+        wxv: results[1].version, //   // 小程序接口版本
+        wxpv: results[1].SDKVersion, //   // 网络类型
         net: results[0].networkType
       };
       console.log(requestParams);
 
       // // 获取广告图片
       wx.request({
-        url: "https://api-sailfish.optaim.com/wx", //接口地址
+        url: "https://api-sailfish.optaim.com/link", //接口地址
         data: requestParams,
         header: {
           "content-type": "application/json", // 默认值
@@ -321,9 +330,25 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
         method: "POST",
         success: function (res) {
           self.addata = res.data;
-          resolve(res.data);
-          console.log("微信", res.data);
-          self.im(self.addata);
+          wx.downloadFile({
+            url: self.addata.icon.url,
+            success: function (e) {
+              console.log(e.tempFilePath);
+              adIcon = e.tempFilePath;
+            }
+          });
+          wx.downloadFile({
+            url: self.addata.main.url,
+            success: function (e) {
+              console.log(e.tempFilePath);
+              adMain = e.tempFilePath;
+              self.loaded = true;
+            }
+          });
+
+          if (res.data) {
+            self.im(self.addata);
+          }
         },
         fail: function (err) {
           console.log("广告接口加载失败", err);
@@ -333,85 +358,245 @@ if (!exports.__esModule) Object.defineProperty(exports, "__esModule", { value: t
   }
 
   drawBottomBanner() {
+    console.log('banner-----------')
     let self = this;
     const screenWidth = this.results[1].windowWidth;
     const screenHeight = this.results[1].windowHeight;
-    const imgWidth = screenWidth;
-    const imgHeight = screenWidth / 3.8;
+    const imgWidth = screenWidth * 0.7;
+    const imgHeight = screenWidth * .35;
     btnArea = {
-      top: this.results[1].windowHeight - this.results[1].windowWidth / 3.8,
-      left: 0,
+      top: screenHeight - screenWidth * .35,
+      left: imgWidth,
       right: screenWidth,
       bottom: screenHeight
     };
     var image = wx.createImage();
-    image.src = this.addata.main.url;
-    let adicon = wx.createImage();
-    adicon.src = "https://s1.ax1x.com/2018/10/23/ir8XU1.png";
+    image.src = adMain;
     self.ctx.drawImage(image, 0, screenHeight - imgHeight, imgWidth, imgHeight);
-    self.ctx.drawImage(adicon, 0, screenHeight - imgHeight, 30, 25);
-    // wx.onTouchStart(this.click.bind(this))
-    // canvas.addEventListener("touchstart", this.click.bind(this));
+    self.ctx.fillStyle = "#FFFFFF";
+
+    self.ctx.fillRect(
+      screenWidth * 0.7,
+      screenHeight - imgHeight,
+      screenWidth * 0.3,
+      imgHeight
+    );
+    var logo = wx.createImage();
+    logo.src = adIcon;
+    self.ctx.drawImage(
+      logo,
+      screenWidth * 0.85 - 20,
+      screenHeight - imgHeight + 10,
+      40,
+      40
+    );
+    self.ctx.fillStyle = "#000";
+    self.ctx.font = "12px Arial";
+    self.ctx.fillText(
+      this.addata.title,
+      screenWidth * 0.85 - 30,
+      screenHeight - imgHeight * 0.4
+    );
+    self.ctx.beginPath();
+    self.ctx.strokeStyle = "#51c332";
+    self.ctx.fillStyle = "#51c332";
+    self.ctx.font = "20px Arial";
+    self.roundRect(
+      self.ctx,
+      screenWidth * 0.85 - 25,
+      screenHeight - imgHeight * 0.3,
+      60,
+      30,
+      5,
+      true
+    );
+    self.ctx.fillText(
+      "查看",
+      screenWidth * 0.85 - 17,
+      screenHeight - imgHeight * 0.25 + 16
+    );
+    this.clickad = this.click.bind(this);
   }
   playVideo(cb) {
-    let advideo = wx.createVideo({
+    let self = this;
+    this.videoPlaying = true;
+    self.advideo = wx.createVideo({
       x: 0,
-      y: 0,
+      y: this.canvas.width * 0.34,
       autoplay: true,
-      // controls: false,
+      controls: false,
+      muted: isMuted,
+      objectFit: 'contain',
 
-      width: canvas.width - 100,
-      height: canvas.height - 100,
-      src: 'http://wxsnsdy.tc.qq.com/105/20210/snsdyvideodownload?filekey=30280201010421301f0201690402534804102ca905ce620b1241b726bc41dcff44e00204012882540400&bizid=1023&hy=SH&fileparam=302c020101042530230204136ffd93020457e3c4ff02024ef202031e8d7f02030f42400204045a320a0201000400'
-    })
-    advideo.onPlay(() => {
-      advideo.seek(327)
-      advideo.requestFullScreen()
-    })
+      width: this.canvas.width,
+      height: this.canvas.height - this.canvas.width * 0.69,
+      src: "http://wxsnsdy.tc.qq.com/105/20210/snsdyvideodownload?filekey=30280201010421301f0201690402534804102ca905ce620b1241b726bc41dcff44e00204012882540400&bizid=1023&hy=SH&fileparam=302c020101042530230204136ffd93020457e3c4ff02024ef202031e8d7f02030f42400204045a320a0201000400"
+    });
 
-    advideo.onEnded(() => {
-      advideo.destroy()
-      cb()
-    })
+    this.clickad = this.click.bind(this);
+    self.canvas.addEventListener("touchstart", this.clickad);
 
+    self.advideo.onPlay(() => {
+      self.advideo.seek(327);
+    });
+    self.drawVideoInfoLoop = this.drawVideoInfo.bind(self)
+    window.cancelAnimationFrame(this.bannerAniId);
 
+    self.bannerAniId = window.requestAnimationFrame(
+      this.drawVideoInfoLoop,
+      self.canvas
+    )
+    // self.drawVideoInfo();
 
+    self.advideo.onEnded(() => {
+      // this.aaa = ''
+      self.canvas.removeEventListener("touchstart", this.clickad);
+      self.advideo.destroy();
+      window.cancelAnimationFrame(self.bannerAniId);
+      self.videoPlaying = false;
+
+      cb();
+    });
   }
-
-  draw() {
+  drawVideoInfo() {
+    console.log('drawVideoInfo---------')
     let self = this;
     const screenWidth = this.results[1].windowWidth;
-    const imgWidth = screenWidth * 0.73;
     const screenHeight = this.results[1].windowHeight;
-    const imgHeight = screenHeight / 3;
-    const posLeft = screenWidth / 2 - imgWidth / 2;
-    const posRight = posLeft + imgWidth - 40;
-    const posTop = screenHeight / 2 - imgHeight / 2;
+    const imgWidth = screenWidth * 0.7;
+    const imgHeight = this.canvas.width * 0.35;
+    self.ctx.fillStyle = "#000";
+
+    self.ctx.fillRect(0, screenHeight - imgHeight, screenWidth, imgHeight);
+    self.ctx.fillRect(0, 0, screenWidth, imgHeight);
+    self.ctx.save();
+    self.ctx.strokeStyle = "white";
+    self.ctx.fillStyle = "white";
+    self.ctx.font = "16px Arial";
+    self.roundRect(
+      self.ctx,
+      screenWidth * 0.05,
+      screenWidth * 0.03,
+      90,
+      30,
+      15,
+      true
+    );
+    self.ctx.fillText(
+      " 关闭广告 ",
+      screenWidth * 0.05 + 10,
+      screenWidth * 0.03 + 22
+    );
+
+    self.ctx.restore();
+
+    self.ctx.fillStyle = "#fff";
+    self.roundRect(
+      self.ctx,
+      10,
+      screenHeight - imgHeight + 10,
+      screenWidth - 20,
+      imgHeight - 20,
+      5
+    );
     btnArea = {
-      top: posTop,
-      left: posLeft,
-      right: posLeft + imgWidth,
-      bottom: posTop + imgHeight
+      top: screenHeight - screenWidth / 3.5,
+      left: imgWidth,
+      right: screenWidth,
+      bottom: screenHeight
     };
-    closeBtn = {
-      top: posTop,
-      left: posLeft + imgWidth - 40,
-      right: posLeft + imgWidth,
-      bottom: posTop + 40
+    btnAreaClose = {
+      top: screenWidth * 0.03,
+      left: screenWidth * 0.05,
+      right: 110 + screenWidth * 0.05,
+      bottom: screenWidth * 0.03 + 30
     };
 
-    // canvas.addEventListener("touchstart", this.click.bind(this));
-    var image = wx.createImage();
-    image.src = this.addata.main.url;
-    var close = wx.createImage();
-    close.src =
-      "http://intention.image.yaocaimaimai.com/tmp/wx11948e15ebecf897.o6zAJs53xG-aCh7q1YzZGZ9arYeU.8FOtdLSwpWXQ5b2bee812d7794ad6caf6f0564eba896.png";
-    self.ctx.drawImage(image, posLeft, posTop, imgWidth, imgHeight);
-    self.ctx.drawImage(close, posLeft + imgWidth - 35 - 3, posTop + 3, 35, 35);
+    var logo = wx.createImage();
+    logo.src = adIcon;
+    self.ctx.drawImage(logo, 30, screenHeight - imgHeight * 0.5 - 20, 40, 40);
+    self.ctx.fillStyle = "#000";
+    self.ctx.font = "20px Arial";
+    let adtitle = self.addata.title;
+    self.ctx.fillText(
+      adtitle,
+      screenWidth * 0.5 - 60,
+      screenHeight - imgHeight * 0.5 + 10
+    );
+    self.ctx.beginPath();
+    self.ctx.strokeStyle = "#51c332";
+    self.ctx.fillStyle = "#51c332";
+    self.roundRect(
+      self.ctx,
+      screenWidth * 0.85 - 40,
+      screenHeight - imgHeight * 0.5 - 15,
+      60,
+      30,
+      5,
+      true
+    );
+    self.ctx.fillText(
+      "查看",
+      screenWidth * 0.85 - 30,
+      screenHeight - imgHeight * 0.5 + 7
+    );
+    self.bannerAniId = window.requestAnimationFrame(
+      self.drawVideoInfoLoop,
+      self.canvas
+    )
+  }
+
+  roundRect(ctx, x, y, width, height, r, isStroke) {
+    ctx.save();
+    ctx.beginPath(); // draw top and top right corner
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + r, r); // draw right side and bottom right corner
+    ctx.arcTo(x + width, y + height, x + width - r, y + height, r); // draw bottom and bottom left corner
+    ctx.arcTo(x, y + height, x, y + height - r, r); // draw left and top left corner
+    ctx.arcTo(x, y, x + r, y, r);
+    if (isStroke) {
+      ctx.stroke();
+    } else {
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.closePath();
+
+  }
+
+  drawFullScreen() {
+    console.log("draw=================");
+    let self = this;
+    const screenWidth = this.results[1].windowWidth;
+    const screenHeight = this.results[1].windowHeight;
+    const imgWidth = screenWidth;
+    const imgHeight = screenHeight;
+    var fullScreenImg = wx.createImage();
+    fullScreenImg.src = adMain;
+    console.log(adMain);
+    self.ctx.drawImage(fullScreenImg, 0, 0, imgWidth, imgHeight);
+    self.ctx.fillStyle = "#333";
+    self.roundRect(
+      self.ctx,
+      screenWidth - 130,
+      screenHeight - 100,
+      120,
+      40,
+      20
+    );
+    self.ctx.font = "20px Arial";
+    self.ctx.fillStyle = "#fff";
+
+    self.ctx.fillText(
+      "剩余广告 " + self.countSeconds,
+      screenWidth - 114,
+      screenHeight - 72
+    );
   }
 };
-}, function(modId) {var map = {"./crypto-js":1542001766293}; return __REQUIRE__(map[modId], modId); })
-__DEFINE__(1542001766293, function(require, module, exports) {
+}, function(modId) {var map = {"./crypto-js":1542001766291}; return __REQUIRE__(map[modId], modId); })
+__DEFINE__(1542001766291, function(require, module, exports) {
 ;(function (root, factory) {
 	if (typeof exports === "object") {
 		// CommonJS
@@ -6401,6 +6586,6 @@ __DEFINE__(1542001766293, function(require, module, exports) {
 
 }));
 }, function(modId) { var map = {}; return __REQUIRE__(map[modId], modId); })
-return __REQUIRE__(1542001766292);
+return __REQUIRE__(1542001766290);
 })()
 //# sourceMappingURL=index.js.map

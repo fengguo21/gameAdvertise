@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "qiyuad": "^1.0.14",
     "renyakun": "^1.0.27"
   }
 }

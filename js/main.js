@@ -4,21 +4,26 @@ import BackGround from './runtime/background'
 import GameInfo from './runtime/gameinfo'
 import Music from './runtime/music'
 import DataBus from './databus'
-// import Advertise from 'renyakun'
+
+// import Advertise from 'qiyuad'
 import Advertise from './index.js'
 
 
 let ctx = canvas.getContext('2d')
 let advertise = new Advertise({
+  adType: 'bottomBanner',
+  // canvas: canvas,
   // type: center,
   ctx: ctx,
   // appid: 'wx0e2f322626d29451',
-  appid: 'wxd40e2a60389369d6',
+  appid: 'wxb57627a2a7e9cb59',
   // slotid: '12B8E77CDC48',
-  slotid: '285DCF11B361',
+  slotid: '0CC494A33A69',
   adid: 2,
   hasUUid: false,
 })
+
+
 
 let databus = new DataBus()
 
@@ -27,6 +32,7 @@ let databus = new DataBus()
  */
 export default class Main {
   constructor() {
+
     // 维护当前requestAnimationFrame的id
     this.aniId = 0
 
@@ -61,7 +67,12 @@ export default class Main {
     this.hasEventBind = false
 
     // 清除上一局的动画
+
     window.cancelAnimationFrame(this.aniId);
+    // setTimeout(function () {
+    //   self.advertise.fullScreenAd(self.restart.bind(self))
+    // }, 2000)
+
 
     this.aniId = window.requestAnimationFrame(
       this.bindLoop,
@@ -120,20 +131,15 @@ export default class Main {
     let y = e.touches[0].clientY
     let area = this.gameinfo.btnArea
 
-    if (x >= area.startX &&
-      x <= area.endX &&
-      y >= area.startY &&
-      y <= area.endY) {
-      let advideo = advertise.playVideo(this.restart.bind(this))
-      // advideo.seek(327)
-      // advideo.onEnded(() => {
-      //   advideo.destroy()
-      //   this.restart()
-      // })
+    // if (x >= area.startX &&
+    //   x <= area.endX &&
+    //   y >= area.startY &&
+    //   y <= area.endY) {
+    //   advertise.playVideo(this.restart.bind(this))
 
-    }
+    // }
 
-    // this.restart()
+    this.restart()
   }
 
   /**
@@ -141,8 +147,15 @@ export default class Main {
    * 每一帧重新绘制所有的需要展示的元素
    */
   render() {
+
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+
+    // if (advertise.loaded && advertise.adType == 'fullScreen') {
+    //   advertise.drawFullScreen()
+    //   return
+
+    // }
     this.bg.render(ctx)
 
     databus.bullets
@@ -160,11 +173,11 @@ export default class Main {
     })
 
     this.gameinfo.renderGameScore(ctx, databus.score)
-
-    if (advertise.addata) {
+    if (this.advertise.loaded) {
       this.advertise.drawBottomBanner()
 
     }
+
 
 
     // 游戏结束停止帧循环
