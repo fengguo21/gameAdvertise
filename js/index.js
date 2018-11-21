@@ -29,12 +29,10 @@ export default class Advertise {
     this.canvas = ctx.canvas;
     this.adType = adType;
     if (this.adType == "fullScreen") {
-
     }
     if (this.adType == "bottomBanner") {
       this.clickad = this.click.bind(this);
       this.canvas.addEventListener("touchstart", this.clickad);
-
     }
 
     this.advertise({
@@ -67,7 +65,7 @@ export default class Advertise {
   }
   // 获取网络类型
   getNetworkType() {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       wx.getNetworkType({
         success(res) {
           // 返回网络类型, 有效值：
@@ -98,9 +96,9 @@ export default class Advertise {
 
   //获取设备类型
   getCellphoneSystemInfo() {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       wx.getSystemInfo({
-        success: function (res) {
+        success: function(res) {
           systemInfo = res;
           console.log(res);
           resolve(res);
@@ -149,12 +147,12 @@ export default class Advertise {
         "content-type": "application/json", // 默认值
         "x-api-version": "1.0.0"
       },
-      success: function (res) {
+      success: function(res) {
         if (res.statusCode === 200) {
           console.log(res);
         }
       },
-      fail: function (err) {
+      fail: function(err) {
         console.log("im接口加载失败", err);
       }
     });
@@ -174,12 +172,12 @@ export default class Advertise {
       header: {
         "content-type": "application/json" // 默认值
       },
-      success: function (res) {
+      success: function(res) {
         if (res.statusCode === 200) {
           // console.log(res);
         }
       },
-      fail: function (err) {
+      fail: function(err) {
         console.log("ck接口加载失败", err);
       }
     });
@@ -199,7 +197,7 @@ export default class Advertise {
       wx.navigateToMiniProgram({
         appId: this.addata.link,
         path: this.addata.path,
-        complete: function (res) {}
+        complete: function(res) {}
       });
       self.ck(self.addata);
       return;
@@ -216,9 +214,8 @@ export default class Advertise {
       wx.showModal({
         title: "提示",
         content: "观看完整视频可获得奖励",
-        confirmText: '关闭广告',
-        cancelText: '继续观看',
-
+        confirmText: "关闭广告",
+        cancelText: "继续观看",
 
         success(res) {
           if (res.confirm) {
@@ -269,22 +266,13 @@ export default class Advertise {
           console.log(adType, "ren-------------");
         });
       })
-      .then(function (res) {
+      .then(function(res) {
         console.log("test==========");
       });
   }
-  getContent({
-    adType,
-    ctx,
-    results,
-    appid,
-    slotid,
-    uuid,
-    wxopt,
-    userinfo
-  }) {
+  getContent({ adType, ctx, results, appid, slotid, uuid, wxopt, userinfo }) {
     let self = this;
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
       // 请求参数
       var requestParams = {
         plugv: version,
@@ -295,9 +283,12 @@ export default class Advertise {
         userinfo: userinfo, //   // 请求ID
         reqid: new Date().getTime() + self.randomString(17), //   // 设备型号
         model: results[1].model, //   // 操作系统
-        os: results[1].system.indexOf("iOS") != -1 ?
-          1 : results[1].system.indexOf("Android") != -1 ?
-          2 : 0, //   // 操作系统版本
+        os:
+          results[1].system.indexOf("iOS") != -1
+            ? 1
+            : results[1].system.indexOf("Android") != -1
+            ? 2
+            : 0, //   // 操作系统版本
         osv: results[1].system, //   // 微信版本
         wxv: results[1].version, //   // 小程序接口版本
         wxpv: results[1].SDKVersion, //   // 网络类型
@@ -314,18 +305,18 @@ export default class Advertise {
           "x-api-version": "1.0.0"
         },
         method: "POST",
-        success: function (res) {
+        success: function(res) {
           self.addata = res.data;
           wx.downloadFile({
             url: self.addata.icon.url,
-            success: function (e) {
+            success: function(e) {
               console.log(e.tempFilePath);
               adIcon = e.tempFilePath;
             }
           });
           wx.downloadFile({
             url: self.addata.main.url,
-            success: function (e) {
+            success: function(e) {
               console.log(e.tempFilePath);
 
               adMain = e.tempFilePath;
@@ -337,7 +328,7 @@ export default class Advertise {
             self.im(self.addata);
           }
         },
-        fail: function (err) {
+        fail: function(err) {
           console.log("广告接口加载失败", err);
         }
       });
@@ -345,14 +336,14 @@ export default class Advertise {
   }
 
   drawBottomBanner() {
-    console.log('banner-----------')
+    console.log("banner-----------");
     let self = this;
     const screenWidth = this.results[1].windowWidth;
     const screenHeight = this.results[1].windowHeight;
     const imgWidth = screenWidth * 0.7;
-    const imgHeight = screenWidth * .35;
+    const imgHeight = screenWidth * 0.35;
     btnArea = {
-      top: screenHeight - screenWidth * .35,
+      top: screenHeight - screenWidth * 0.35,
       left: imgWidth,
       right: screenWidth,
       bottom: screenHeight
@@ -413,11 +404,12 @@ export default class Advertise {
       autoplay: true,
       controls: false,
       muted: isMuted,
-      objectFit: 'contain',
+      objectFit: "contain",
 
       width: this.canvas.width,
       height: this.canvas.height - this.canvas.width * 0.69,
-      src: "http://wxsnsdy.tc.qq.com/105/20210/snsdyvideodownload?filekey=30280201010421301f0201690402534804102ca905ce620b1241b726bc41dcff44e00204012882540400&bizid=1023&hy=SH&fileparam=302c020101042530230204136ffd93020457e3c4ff02024ef202031e8d7f02030f42400204045a320a0201000400"
+      src:
+        "http://wxsnsdy.tc.qq.com/105/20210/snsdyvideodownload?filekey=30280201010421301f0201690402534804102ca905ce620b1241b726bc41dcff44e00204012882540400&bizid=1023&hy=SH&fileparam=302c020101042530230204136ffd93020457e3c4ff02024ef202031e8d7f02030f42400204045a320a0201000400"
     });
 
     this.clickad = this.click.bind(this);
@@ -426,13 +418,13 @@ export default class Advertise {
     self.advideo.onPlay(() => {
       self.advideo.seek(327);
     });
-    self.drawVideoInfoLoop = this.drawVideoInfo.bind(self)
+    self.drawVideoInfoLoop = this.drawVideoInfo.bind(self);
     window.cancelAnimationFrame(this.bannerAniId);
 
     self.bannerAniId = window.requestAnimationFrame(
       this.drawVideoInfoLoop,
       self.canvas
-    )
+    );
     // self.drawVideoInfo();
 
     self.advideo.onEnded(() => {
@@ -446,7 +438,7 @@ export default class Advertise {
     });
   }
   drawVideoInfo() {
-    console.log('drawVideoInfo---------')
+    console.log("drawVideoInfo---------");
     let self = this;
     const screenWidth = this.results[1].windowWidth;
     const screenHeight = this.results[1].windowHeight;
@@ -530,7 +522,7 @@ export default class Advertise {
     self.bannerAniId = window.requestAnimationFrame(
       self.drawVideoInfoLoop,
       self.canvas
-    )
+    );
   }
 
   roundRect(ctx, x, y, width, height, r, isStroke) {
@@ -549,13 +541,11 @@ export default class Advertise {
     ctx.restore();
 
     ctx.closePath();
-
   }
-
 
   drawFullScreen() {
     let self = this;
-    console.log(self.countSeconds)
+    console.log(self.countSeconds);
     const screenWidth = this.canvas.width;
     const screenHeight = this.canvas.height;
     const imgWidth = screenWidth;
@@ -584,28 +574,24 @@ export default class Advertise {
     this.fullScreenId = window.requestAnimationFrame(
       this.drawFullScreenLoop,
       canvas
-    )
+    );
   }
-  afterFullScreenAd() {
-
-  }
+  afterFullScreenAd() {}
   fullScreenAd(cb) {
-    let self = this
-
+    let self = this;
 
     self.countSeconds = 6;
-    let timer = setInterval(function () {
+    let timer = setInterval(function() {
       self.countSeconds = self.countSeconds - 1;
     }, 1000);
-    setTimeout(function () {
+    setTimeout(function() {
       self.adType = "";
       window.cancelAnimationFrame(self.fullScreenId);
 
-      clearInterval(timer)
+      clearInterval(timer);
     }, 6000);
 
-
-    this.drawFullScreenLoop = this.drawFullScreen.bind(self)
+    this.drawFullScreenLoop = this.drawFullScreen.bind(self);
 
     // 清除上一局的动画
     window.cancelAnimationFrame(this.fullScreenId);
@@ -613,6 +599,6 @@ export default class Advertise {
     this.fullScreenId = window.requestAnimationFrame(
       self.drawFullScreenLoop,
       self.canvas
-    )
+    );
   }
 }
